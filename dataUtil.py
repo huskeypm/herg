@@ -273,6 +273,14 @@ def ComputeROC(df, threshVals = 20,display=False):
     plt.xlabel("Cutoffs") 
     plt.legend()
 
+    outputs = dict()
+    outputs['cutoffs']=cutoffs
+    outputs['tprs']=tprs
+    outputs['fprs']=fprs
+    outputs['tnrs']=tnrs
+    outputs['fnrs']=fnrs
+    return outputs 
+
 
 def ProbClassifier(df,tags,display=False,split=True):
     # organize data relative to WT
@@ -300,5 +308,6 @@ def ProbClassifier(df,tags,display=False,split=True):
         dummy = calcRates(df_test,cutoff=None,display=display)
 
     # compute ROC curve for classifier
-    ComputeROC(df_test,display=display)
+    outputs = ComputeROC(df_test,display=display)
+    return outputs
 
