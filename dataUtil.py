@@ -99,6 +99,8 @@ def plotVals(df,tag='dRMSD',asLog=False,label=None):
 
 # Calculate true positive probability densities as a function of cutoff
 def probCond(df, tag,display=False):
+    fileName = tag+"_cumeprob.txt" 
+
     minVal = np.min( df[tag])
     maxVal = np.max( df[tag])
     iters=20; #print("do more values?")
@@ -119,6 +121,13 @@ def probCond(df, tag,display=False):
         pInSol = nInSol/tot
         probs[i] = pInSol
         #print( threshVal, tot, nSol, nInSol, pInSol )
+
+    # save data 
+    stacked = np.stack([threshVals,probs], axis=0)
+    np.savetxt(fileName,stacked) 
+
+    print("LEAVING") 
+    quit()
 
 #    plt.plot(threshVals,probs)
     if display:

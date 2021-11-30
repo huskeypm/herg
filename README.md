@@ -5,6 +5,8 @@ A colab notebook is at https://colab.research.google.com/drive/1g9JlkIxmejK-xgfV
 
 feature_sets/ # contains feature data sets 
 
+dataUtil.py # for conditional probabilities 
+mlUtil.py # for ML strategies 
 
 
 # TODOS
