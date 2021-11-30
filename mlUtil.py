@@ -349,7 +349,4 @@ def OLD():
 
     return (tpr,fpr,auc) 
 
-print("Select F1score for non/trafficking ") 
-
-
 #run()
