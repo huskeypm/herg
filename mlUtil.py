@@ -212,7 +212,17 @@ def MLClassifier(df,features,output,
         plt.title('Feature Importances-MD features (DT)')
         plt.savefig(classifier+'_fi_md.pdf')
 
-    return (tpr,fpr,auc,f1ScoreMacro) 
+    # package
+    outputs = dict()
+    #outputs['cutoffs']=cutoffs
+    outputs['tprs']=tpr
+    outputs['fprs']=fpr
+    #outputs['tnrs']=tnrs
+    #outputs['fnrs']=fnrs
+    outputs['auc']=auc
+    outputs['f1score']=f1ScoreMacro
+
+    return outputs 
 
 def OLD():
     """### generate data for ROC curve"""
@@ -348,11 +358,11 @@ def OLD():
     plt.savefig('dt_roc_md.pdf', bbox_inches='tight')
 
     outputs = dict()
-    outputs['cutoffs']=cutoffs
-    outputs['tprs']=tprs
-    outputs['fprs']=fprs
-    outputs['tnrs']=tnrs
-    outputs['fnrs']=fnrs
+    #outputs['cutoffs']=cutoffs
+    outputs['tprs']=tpr
+    outputs['fprs']=fpr
+    #outputs['tnrs']=tnrs
+    #outputs['fnrs']=fnrs
     outputs['auc']=auc
 
     return outputs        
