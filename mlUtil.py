@@ -347,6 +347,14 @@ def OLD():
     plt.legend(bbox_to_anchor=(1,0.9), loc='upper left')
     plt.savefig('dt_roc_md.pdf', bbox_inches='tight')
 
-    return (tpr,fpr,auc) 
+    outputs = dict()
+    outputs['cutoffs']=cutoffs
+    outputs['tprs']=tprs
+    outputs['fprs']=fprs
+    outputs['tnrs']=tnrs
+    outputs['fnrs']=fnrs
+    outputs['auc']=auc
+
+    return outputs        
 
 #run()

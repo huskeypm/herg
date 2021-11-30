@@ -285,6 +285,7 @@ def ComputeROC(df, threshVals = 20,display=False):
     outputs['fprs']=fprs
     outputs['tnrs']=tnrs
     outputs['fnrs']=fnrs
+    outputs['auc']=auc  
     return outputs 
 
 
