@@ -126,9 +126,6 @@ def probCond(df, tag,display=False):
     stacked = np.stack([threshVals,probs], axis=0)
     np.savetxt(fileName,stacked) 
 
-    print("LEAVING") 
-    quit()
-
 #    plt.plot(threshVals,probs)
     if display:
         plt.plot(threshVals,probs,label=tag)
@@ -136,7 +133,7 @@ def probCond(df, tag,display=False):
         plt.ylabel('Prob(Insoluble|Threshold)')
         plt.xlabel('Threshold')
         plt.legend()
-#    plt.title(tag)
+        plt.title("ROC MD") 
 
     return (threshVals, probs)
 

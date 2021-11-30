@@ -25,3 +25,24 @@ def CalcInitialAA(df,newTag="INITAA"):
          calc_prop(row['VARIANT']),
          axis=1)
 
+
+##### FOR KAL TO IMPLEMENT ###############
+
+"""
+Brief Documentation of feature 
+"""
+def CalcRMSFScore(rmsfFileName, variantName, aaRange=[]):
+    return 1/0
+
+"""
+Brief Documentation of feature 
+"""
+def CalcNativeScore(nativeFileName, variantName):
+    return 1/0
+
+"""
+Brief Documentation of feature 
+"""
+def CalcSASASingleScore(nativeFileName, variantName):
+    return 1/0
+

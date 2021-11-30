@@ -24,6 +24,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
+from sklearn import svm
 
 from sklearn import metrics
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, plot_confusion_matrix, plot_roc_curve
@@ -83,7 +84,7 @@ def TestAccuracySingle(clf,X_test,Y_test,idx=0):
     print("prediction",result)
     #print(Y_test.iloc[idx])
 
-#TestAccuracy(clf_entropy,X_test,Y_test,display=True)
+#TestAccuracy(clf,X_test,Y_test,display=True)
 
 def DataCuration(df):
     #df['decimal_place_2'] = df['decimal_place_2'].round(2)
@@ -116,8 +117,11 @@ def run():
 """
 Initializes, trains and tests ML classifiers
 Written for decision tree currently 
+Classifiers: DT, RF, SVM 
 """
-def MLClassifier(df,features,output, display=False,random_state=50):
+def MLClassifier(df,features,output, 
+        classifier="DT",
+        display=False,random_state=50):
     # rounding for some reason 
     DataCuration(df)
 
@@ -133,62 +137,82 @@ def MLClassifier(df,features,output, display=False,random_state=50):
     
     
     #initializing the classifier and fitting it
-    clf_entropy = DecisionTreeClassifier(
-      criterion = "entropy",
-      #class_weight="balanced",
-      random_state = random_state, #set random number seed
-        max_depth=None,
-        max_features=3,
-        min_samples_leaf=1) #min of samples needed at a node for it to split further
-    
-    print("Add me")
-    ##>>> add clf_rf = 
+    if classifier=="DT":
+      print("Decision tree classifier") 
+      clf = DecisionTreeClassifier(
+        criterion = "entropy",
+        #class_weight="balanced",
+        random_state = random_state, #set random number seed
+          max_depth=None,
+          max_features=3,
+          min_samples_leaf=1) #min of samples needed at a node for it to split further
+      model=clf.fit(X_train, Y_train)
+
+    elif classifier=="RF": 
+      clf = RandomForestClassifier(
+              bootstrap=True, n_estimators=10000, criterion="entropy", max_depth=None, max_features=4, max_leaf_nodes=None,
+              min_samples_leaf=1, min_samples_split=2, random_state=50)
+      model=clf.fit(X_train, Y_train)
+
+    elif classifier=="SVM":
+      print("VERY BUGGY/INSUFFICIENT IMPLEMENTATION") 
+      clf = svm.SVC()  
+      clf.fit(X_train, np.ravel( Y_train) )
+
+    else:
+      raise RuntimeError(classifier+" not supported") 
     
     # fitting 
-    model=clf_entropy.fit(X_train, Y_train)
-
-    #classNames=np.array(['0', '1']) # need to verify, but I think this is correct
-    #classNames=np.array(['benign', 'pathogenic']) # need to verify, but I think this is correct
-    classNames=np.array(['non-trafficking', 'trafficking']) # need to verify, but I think this is correct
-    
-    if display: 
-      plotDT(clf_entropy,featureNames=features, classNames=classNames)
-      plt.savefig('dt_tree_md.pdf')
+    #model=clf.fit(X_train, Y_train)
 
     
     # print training accuracy
     print("Training sample accuracy")
-    TestAccuracy(clf_entropy,X_train,Y_train)
+    TestAccuracy(clf,X_train,Y_train)
     
-    #TestAccuracy(clf_entropy,X_test,Y_test, display=True)
+    #TestAccuracy(clf,X_test,Y_test, display=True)
     print('Test Accuracy')
-    TestAccuracy(clf_entropy,X_test,Y_test)
+    TestAccuracy(clf,X_test,Y_test)
     
     
     ### Print overall classification metrics
-    report = True
-    if report: 
-      y_predict = clf_entropy.predict(X_test.values)
-        
-      print("extract class report data")
-      print(classification_report(Y_test, y_predict, target_names=classNames))
-      #print(confusion_matrix(Y_test, y_predict))
+    y_predict = clf.predict(X_test.values)
+    classNames=np.array(['non-trafficking', 'trafficking']) # need to verify, but I think this is correct
+    print(classification_report(Y_test, y_predict, target_names=classNames))
+    f1ScoreMacro =metrics.f1_score(Y_test, y_predict, average='macro')
+
+    if classifier=="SVM":
+        print("BOWING OUT UNTIL I CAN RESOLVE SOME BUGS WITH SVMS") 
+        return None 
+
+    ### ROC 
+    y_predict = clf.predict_proba(X_test.values)
+    fpr, tpr, thr = metrics.roc_curve(Y_test, y_predict[:,1], drop_intermediate=False)
+    auc = metrics.auc(fpr, tpr)
+      
     
     if display:
+        if classifier == "DT":    
+          plotDT(clf,featureNames=features, classNames=classNames)
+          plt.savefig('dt_tree_md.pdf')
+
+
         plt.figure()  
-        plot_confusion_matrix(clf_entropy, X_test, Y_test)
-        plt.savefig('dt_cm_md.pdf')
+        plot_confusion_matrix(clf, X_test, Y_test)
+        plt.savefig(classifier+'_cm_md.pdf')
         
         plt.figure()
-        plot_roc_curve(clf_entropy, X_test, Y_test)
-        plt.savefig('dt_roc_mdfeatures_latest.pdf')
+        plot_roc_curve(clf, X_test, Y_test)
+        plt.savefig(classifier+'_roc_mdfeatures_latest.pdf')
         
         # print feature importance
         plt.figure()
         feat_importances = pd.Series(model.feature_importances_, index=X.columns)
         feat_importances.nlargest(10).plot(kind='barh', color="green")
         plt.title('Feature Importances-MD features (DT)')
-        plt.savefig('dt_fi_md.pdf')
+        plt.savefig(classifier+'_fi_md.pdf')
+
+    return (tpr,fpr,auc,f1ScoreMacro) 
 
 def OLD():
     """### generate data for ROC curve"""
@@ -207,8 +231,8 @@ def OLD():
     #X = df[features]
     
     #extracting metrics for whole model
-    y_predict = clf_entropy.fit(X_train, Y_train).predict_proba(X_test)
-    #y_predict = clf_entropy.fit(X_train, Y_train).decisions(X_test)
+    y_predict = clf.fit(X_train, Y_train).predict_proba(X_test)
+    #y_predict = clf.fit(X_train, Y_train).decisions(X_test)
     fpr, tpr, thr = metrics.roc_curve(Y_test, y_predict[:,1], drop_intermediate=False)
     auc = metrics.auc(fpr, tpr)
     
@@ -300,7 +324,7 @@ def OLD():
     """### Plot ROC"""
     
     #plot the roc curves of rmsd, waters and hbonds. auc is area under the curve
-    #plot_roc_curve(clf_entropy, X_test, Y_test)
+    #plot_roc_curve(clf, X_test, Y_test)
     plt.figure()
     plt.plot (fpr, tpr, color='cyan', label="DT Classifier(AUC=%0.2f)"% auc)
     if False: 
@@ -323,7 +347,9 @@ def OLD():
     plt.legend(bbox_to_anchor=(1,0.9), loc='upper left')
     plt.savefig('dt_roc_md.pdf', bbox_inches='tight')
 
+    return (tpr,fpr,auc) 
+
 print("Select F1score for non/trafficking ") 
 
 
-run()
+#run()
