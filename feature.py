@@ -46,12 +46,27 @@ Brief Documentation of feature
 def CalcSASASingleScore(nativeFileName, variantName):
     return 1/0
 
+
+
 ####### change im aa sidechain volume is estimated.
 ####### volume in solution is being used for this calculation
 ####### volumes are missig for his, arg, cys
 ####### ref: "Volumes of Individual Amino Acid Residues in Gas-Phase Peptide Ions"
 
 def Calcsvolume(df,newTag="SVOLUME"):
+
+  properties={
+      'a': 100.3, 'c':100, 'd': 113.1, 'e': 140.2, 
+      'f': 202.3, 'g': 71.7, 'h':202, 'i': 175.4,
+      'k': 170.3, 'l': 178.7, 'm':174.9, 'n':128.4,
+      'p':137.2, 'q':156, 'r':170, 's':100.7, 't':127.6,
+      'v':150.6, 'w':239, 'y':205.3,
+  }
+
+
+####### aa charges
+
+def Calccharge(df,newTag="CHARGE"):
 
   properties={
       'a': 100.3, 'c':100, 'd': 113.1, 'e': 140.2, 
