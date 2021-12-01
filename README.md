@@ -21,9 +21,9 @@ mlUtil.py # for ML strategies
     - we need two files: 
          1. input file: this is used to load all the trajectories and the calculation to carryout. Below is an example input file (3atp.in) used to calculate the dynamic cross correlations.
 
-         trajin /data/jalenciks/P2X4.mg/wrap-trajectories/3atp-1.dcd 1 -1 50
+         trajin 3atp-1.dcd 1 -1 50
 
-         rms ../wrap-trajectories/3atp-1.pdb
+         rms 3atp-1.pdb
          
          matrix correl @CA out 3atp-3mg.dat byres
 
