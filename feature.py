@@ -46,3 +46,14 @@ Brief Documentation of feature
 def CalcSASASingleScore(nativeFileName, variantName):
     return 1/0
 
+####### aminoacid side chain volume
+
+def CalcInitialAA(df,newTag="SVOLUME"):
+
+  properties={
+      'a': 100.3, 'c': , 'd': 113.1, 'e': 140.2, 
+      'f': 202.3, 'g': 71.7, 'h': , 'i': 175.4,
+      'k': 170.3, 'l': 178.7, 'm':174.9, 'n':128.4,
+      'p':137.2, 'q':156, 'r':, 's':100.7, 't':127.6,
+      'v':150.6, 'w':239, 'y':205.3,
+  }
