@@ -46,7 +46,10 @@ Brief Documentation of feature
 def CalcSASASingleScore(nativeFileName, variantName):
     return 1/0
 
-####### aminoacid side chain volume
+####### change im aa sidechain volume is estimated.
+####### volume in solution is being used for this calculation
+####### volumes are missig for his, arg, cys
+####### ref: "Volumes of Individual Amino Acid Residues in Gas-Phase Peptide Ions"
 
 def Calcsvolume(df,newTag="SVOLUME"):
 
