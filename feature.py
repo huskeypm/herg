@@ -52,9 +52,7 @@ def CalcSASASingleScore(nativeFileName, variantName):
 ####### volume in solution is being used for this calculation
 ####### volumes are missig for his, arg, cys
 ####### ref: "Volumes of Individual Amino Acid Residues in Gas-Phase Peptide Ions"
-
 def Calcsvolume(df,newTag="SVOLUME"):
-
   properties={
       'a': 100.3, 'c':100, 'd': 113.1, 'e': 140.2, 
       'f': 202.3, 'g': 71.7, 'h':202, 'i': 175.4,
@@ -65,9 +63,7 @@ def Calcsvolume(df,newTag="SVOLUME"):
 
 
 ####### aa charges
-
 def Calccharge(df,newTag="CHARGE"):
-
   properties={
       'a':0, 'c':0, 'd':-1, 'e':-1, 
       'f':0, 'g':0, 'h':1, 'i':0,
