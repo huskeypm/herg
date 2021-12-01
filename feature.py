@@ -48,7 +48,7 @@ def CalcSASASingleScore(nativeFileName, variantName):
 
 ####### aminoacid side chain volume
 
-def CalcInitialAA(df,newTag="SVOLUME"):
+def Calcsvolume(df,newTag="SVOLUME"):
 
   properties={
       'a': 100.3, 'c': , 'd': 113.1, 'e': 140.2, 
