@@ -1,4 +1,4 @@
-	RMSF 73TO78
+	RMSF73TO78
 wt	0.83
 l86p	1.93
 t74p	3.02
