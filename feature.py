@@ -41,7 +41,8 @@ def CalcNativeScore(nativeFileName, variantName):
     return 1/0
 
 """
-Brief Documentation of feature 
+Brief Documentation of feature.
+data is in file 'feature_sets/sasa-wt-aa.txt'
 """
 def CalcSASASingleScore(nativeFileName, variantName):
     return 1/0
