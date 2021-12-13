@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+#pd.options.mode.chained_assignment = 'raise'
+
 
 def CalcZScore(df,tag):
     vals = df.loc[df.index,[tag]]
@@ -12,9 +14,6 @@ def CalcZScore(df,tag):
     return zs
 
 # compute relative values
-# i don't see the WT data, so well say
-#wtName = "Y99S"
-
 def ShapeData(df,tag,wtName,zscore=False,display=False):
     wtDF = df.loc[df['VARIANT'] == wtName]
 
@@ -40,12 +39,12 @@ def ShapeData(df,tag,wtName,zscore=False,display=False):
     pctSub = nInSol_sub/np.float( nSubThresh  )
 
     if (pctSup > pctSub):  # higher values have higher pctg of LOF variants
-        df[newTag] = df[tag] - vWT
+        df.loc[:,newTag] = df[tag] - vWT
         label = newTag
     else:
-        df[newTag] = vWT - df[tag]    # lower values have higher pctg LOF variants
+        df.loc[:,newTag] = vWT - df[tag]    # lower values have higher pctg LOF variants
         label = "-1 x "+newTag
-    print(tag,pctSub,pctSup,tot,label)
+    #print(tag,pctSub,pctSup,tot,label)
 
     if display:
         plt.figure()
@@ -123,12 +122,13 @@ def probCond(df, tag,display=False):
         probs[i] = pInSol
         #print( threshVal, tot, nSol, nInSol, pInSol )
 
-    # save data 
-    stacked = np.stack([threshVals,probs], axis=0)
-    np.savetxt(fileName,stacked) 
 
 #    plt.plot(threshVals,probs)
     if display:
+        # save data
+        stacked = np.stack([threshVals,probs], axis=0)
+        np.savetxt(fileName,stacked) 
+        # plot 
         plt.plot(threshVals,probs,label=tag)
 
         plt.ylabel('Prob(Insoluble|Threshold)')
@@ -163,7 +163,7 @@ def ProdCondProbs(tagsSubset,df,df_train,df_test,display=False):
         vals = df[tag]
         #print(vals)
         ps = np.interp(vals,t,p) # populate for ALL members of df
-        df['pInSol'+tag] = ps
+        df.loc[:,'pInSol'+tag] = ps
         #print(vals)
         #print(ps)
         prods *= ps
@@ -173,12 +173,15 @@ def ProdCondProbs(tagsSubset,df,df_train,df_test,display=False):
     #totProd = np.sum(prods)
     maxProd = np.max(prods)
     #print(totProd)
-    df['Prod'] = prods/maxProd
+    df.loc[:,'Prod'] = prods/maxProd
     # verify that np.sum(df['Prod']) = 1
     
     # apply to test/train data 
     df_train.loc[:,"Prod"] = 0
     df_test.loc[:,"Prod"] = 0
+    #df_train = df_train.assign( Prod=0 )   
+    #df_test  = df_test.assign( Prod=0 )   
+    #df_test.loc[:,"Prod"] = 0
     for index, row in df.iterrows():
       #print(row['VARIANT'])
       refVar = row['VARIANT']
@@ -186,11 +189,8 @@ def ProdCondProbs(tagsSubset,df,df_train,df_test,display=False):
       idxTest = df_test.index[df_test['VARIANT'] == row['VARIANT']]
 
       if len(idxTest)>0: # shouldn't get more than 1, but this should throw an error if so
-        cIdx = df_test.columns.get_loc('Prod') 
-        #df_test.loc[idxTest[0],cIdx]=row['Prod']
         df_test.loc[idxTest[0],'Prod']=row['Prod']
       if len(idxTrain)>0: # shouldn't get more than 1, but this should throw an error if so
-        cIdx = df_train.columns.get_loc('Prod') 
         df_train.loc[idxTrain[0],'Prod']=row['Prod']
 
     #print(df[['VARIANT','Prod']])
@@ -246,9 +246,14 @@ def calcRates(df,cutoff=None,display=False,verbose=False):
 
     # TP/(TP + FP)
     positives = np.float( TP + FP )
-    TPR = TP/positives                                      
-    # FP/(TP + FP)
-    FPR = FP/positives
+    if positives <= 1e-3:
+      TPR=0.
+      FPR=0.
+    else: 
+      TPR = TP/positives                                      
+      # FP/(TP + FP)
+      FPR = FP/positives
+
     negatives = np.float( FN + TN )
     if negatives <= 1e-3:
         FNR = 0.
@@ -280,31 +285,58 @@ def calcRates(df,cutoff=None,display=False,verbose=False):
     return outputs
 
 # calc F1 score, etc
-def calcStats(df_test,cutoff=0.3,display=False):
+def calcStats(df_test,cutoff=0.3,display=False,verbose=False):
   # stats for nontrafficking 
   output = calcRates(df_test,cutoff=cutoff,display=display)
   TP,FP,TN,FN = output['TP'],output['FP'],output['TN'],output['FN']
 
   def calcall(TP,FP,TN,FN):
     accuracy = (TP+TN)/np.float(TP+TN+FP+FN) 
-    precision = TP/(TP + FP)
-    recall = TP/(TP + FN) 
-    F1 = 2/(1/recall + 1/precision) 
+    try:
+      precision = TP/(TP + FP)
+    except:
+      precision = 0.
+
+    try: 
+        recall = TP/(TP + FN) 
+    except:
+        recall=0.
+
+
+    try:
+        F1 = 2/(1/recall + 1/precision) 
+    except:
+        F1 = 0.
     return accuracy,precision,recall,F1 
 
   accuracy,precision,recall,F1 = calcall(TP,FP,TN,FN)
-  print("Accuracy(NT)", accuracy) 
-  print("Precision(NT)", precision) 
-  print("Recall(NT)", recall)             
-  print("F1 score(NT)", F1) 
+  if verbose: 
+    print("Accuracy(NT)", accuracy) 
+    print("Precision(NT)", precision) 
+    print("Recall(NT)", recall)             
+    print("F1 score(NT)", F1) 
 
   # get for trafficking now (a true negative for NT is a true pos. for T (a true negative for NT is a true pos. for T)) 
   tTN, tFN, tTP, tFP = TP,FP,TN,FN
-  accuracy,precision,recall,F1 = calcall(tTP,tFP,tTN,tFN)
-  print("Accuracy(T)", accuracy) 
-  print("Precision(T)", precision) 
-  print("Recall(T)", recall)             
-  print("F1 score(T)", F1) 
+  taccuracy,tprecision,trecall,tF1 = calcall(tTP,tFP,tTN,tFN)
+  if verbose: 
+    print("Accuracy(T)", taccuracy) 
+    print("Precision(T)", tprecision) 
+    print("Recall(T)", trecall)             
+    print("F1 score(T)", tF1) 
+
+  statsOut = {
+          'accT':taccuracy ,
+          'precT':tprecision,
+          'recT':trecall,
+          'f1T':tF1,        
+
+          'acc':accuracy ,
+          'prec':precision,
+          'rec':recall,
+          'f1':F1,        
+          }
+  return statsOut
 
 
 # compute ROC curve
@@ -377,20 +409,10 @@ def ComputeROC(df, threshVals = 20,display=False):
     return outputs 
 
 
-def ProbClassifier(df,tags,display=False,split=True):
-    # organize data relative to WT
-    wtName = "wt"
-    zscore = True 
-    for tag in tags:
-        ShapeData(df,tag,wtName,zscore=zscore,display=display)
-
-    dTags = ["d"+t for t in tags]
-
-
-    # partition in test/training set
+def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True):
     if split:
       df_train, df_test = train_test_split(df, test_size=0.3)
-      print ( len(df),len(df_train), len(df_test) )
+      #print ( len(df),len(df_train), len(df_test) )
     else: 
       df_train = df
       df_test = df
@@ -398,15 +420,48 @@ def ProbClassifier(df,tags,display=False,split=True):
     # compute product of conditional probabilities
     ProdCondProbs(dTags,df,df_train,df_test,display=display)
 
-    debug = True
-    if debug:
-        cutoff = 0.04     
-        print("TRAINING stats") 
-        dummy = calcStats(df_train,cutoff=cutoff,display=display)
-        print("TESTING  stats") 
-        dummy = calcStats(df_test,cutoff=cutoff,display=display)
+    cutoff = 0.04     # user encoded 
+    #print("TRAINING stats") 
+    outs_train= calcStats(df_train,cutoff=cutoff,display=display)
+    #print("TESTING  stats") 
+    outs_test= calcStats(df_test,cutoff=cutoff,display=display)
+
+    return outs_train,outs_test, df_test
+
+
+def ProbClassifier(df,tags,display=False,split=True,bootstrap=False):
+    # organize data relative to WT
+    wtName = "wt"
+    zscore = True 
+    for tag in tags:
+        ShapeData(df,tag,wtName,zscore=zscore,display=display)
+    dTags = ["d"+t for t in tags]
+
+
+    # partition in test/training set
+    if bootstrap:
+      nIter = 500
+      print("Bootstrap with ",nIter)
+      statsdf = pd.DataFrame()
+      for i in range(nIter):
+        print(i)
+        outs_train, outs_test,df_test = BuildAndEvaluate(
+                df,dTags,cutoff=0.04,split=split,display=False)     
+        dfn = pd.DataFrame(outs_test,index=[i])
+        dfn['AccTraining'] = outs_train['acc']
+        statsdf = statsdf.append(dfn)
+
+      print(statsdf.head())
+      for column in statsdf.columns[:]:
+          print(column+" avg: ",statsdf[column].mean())
+
+    else:
+        outs_train, outs_test,df_test = BuildAndEvaluate(
+                df,dTags,cutoff=0.04,split=split,display=display)
+
 
     # compute ROC curve for classifier
     outputs = ComputeROC(df_test,display=display)
+
     return outputs
 

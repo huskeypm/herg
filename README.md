@@ -8,6 +8,11 @@ feature_sets/ # contains feature data sets
 dataUtil.py # for conditional probabilities 
 mlUtil.py # for ML strategies 
 
+# to generate results 
+python run.py -run # generates plots for all data 
+python run.py -nodisp -run prob # generates data from probability classifier, but without images (faster)  
+python run.py -bootstrap -nodisp -run prob # bootstrapping 
+
 
 # TODOS
 - something is fishy about the zscores, so I want to look into that later
