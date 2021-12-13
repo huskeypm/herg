@@ -147,7 +147,7 @@ def probCond(df, tag,display=False):
 #
 #
 #* Note: adjust the value_variant-value_wt order to make sure all plots are roughly monotonically increasing *
-def ProdCondProbs(tagsSubset,df,df_train,display=False):
+def ProdCondProbs(tagsSubset,df,df_train,df_test,display=False):
     if display: 
       plt.figure()
     prods = np.ones(len(df.index))
@@ -175,6 +175,30 @@ def ProdCondProbs(tagsSubset,df,df_train,display=False):
     #print(totProd)
     df['Prod'] = prods/maxProd
     # verify that np.sum(df['Prod']) = 1
+    
+    # apply to test/train data 
+    df_train.loc[:,"Prod"] = 0
+    df_test.loc[:,"Prod"] = 0
+    for index, row in df.iterrows():
+      #print(row['VARIANT'])
+      refVar = row['VARIANT']
+      idxTrain = df_train.index[df_train['VARIANT'] == row['VARIANT']]
+      idxTest = df_test.index[df_test['VARIANT'] == row['VARIANT']]
+
+      if len(idxTest)>0: # shouldn't get more than 1, but this should throw an error if so
+        cIdx = df_test.columns.get_loc('Prod') 
+        #df_test.loc[idxTest[0],cIdx]=row['Prod']
+        df_test.loc[idxTest[0],'Prod']=row['Prod']
+      if len(idxTrain)>0: # shouldn't get more than 1, but this should throw an error if so
+        cIdx = df_train.columns.get_loc('Prod') 
+        df_train.loc[idxTrain[0],'Prod']=row['Prod']
+
+    #print(df[['VARIANT','Prod']])
+    #print(df_train[['VARIANT','Prod']])
+    #print(df_test[['VARIANT','Prod']])
+    
+
+
     if display: 
       plt.savefig('indi_condprob_md.pdf')
 
@@ -187,7 +211,7 @@ def ProdCondProbs(tagsSubset,df,df_train,display=False):
 
 # The product of conditional probabilities gives the likelihood that a member is defective (insoluble), given the products of being insoluble for each feature. We then pick a 'reasonable' threshold to decide if a member is insoluble
 
-def calcRates(df,cutoff=None,display=False,verbose=True):
+def calcRates(df,cutoff=None,display=False,verbose=False):
     insolVs = df[df['TRAFFICKING'] == 0]['Prod']
     solVs = df[df['TRAFFICKING'] == 1]['Prod']
 
@@ -372,11 +396,14 @@ def ProbClassifier(df,tags,display=False,split=True):
       df_test = df
 
     # compute product of conditional probabilities
-    ProdCondProbs(dTags,df,df_train,display=display)
+    ProdCondProbs(dTags,df,df_train,df_test,display=display)
 
     debug = True
     if debug:
         cutoff = 0.04     
+        print("TRAINING stats") 
+        dummy = calcStats(df_train,cutoff=cutoff,display=display)
+        print("TESTING  stats") 
         dummy = calcStats(df_test,cutoff=cutoff,display=display)
 
     # compute ROC curve for classifier
