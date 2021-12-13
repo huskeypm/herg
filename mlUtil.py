@@ -199,18 +199,20 @@ def MLClassifier(df,features,output,
 
         plt.figure()  
         plot_confusion_matrix(clf, X_test, Y_test)
-        plt.savefig(classifier+'_cm_md.pdf')
+        plt.title("Confusion matrix") 
+        plt.savefig(classifier+'_cm.pdf')
         
         plt.figure()
         plot_roc_curve(clf, X_test, Y_test)
-        plt.savefig(classifier+'_roc_mdfeatures_latest.pdf')
+        plt.title("ROC curve") 
+        plt.savefig(classifier+'_roc_features.pdf')
         
         # print feature importance
         plt.figure()
         feat_importances = pd.Series(model.feature_importances_, index=X.columns)
         feat_importances.nlargest(10).plot(kind='barh', color="green")
-        plt.title('Feature Importances-MD features (DT)')
-        plt.savefig(classifier+'_fi_md.pdf')
+        plt.title('Feature Importances for '+classifier)  
+        plt.savefig(classifier+'_fi.pdf')
 
     # package
     outputs = dict()

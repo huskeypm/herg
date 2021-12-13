@@ -1,6 +1,7 @@
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
 def CalcZScore(df,tag):
@@ -133,7 +134,7 @@ def probCond(df, tag,display=False):
         plt.ylabel('Prob(Insoluble|Threshold)')
         plt.xlabel('Threshold')
         plt.legend()
-        plt.title("ROC MD") 
+        plt.title("Cond. probability") 
 
     return (threshVals, probs)
 
@@ -147,7 +148,8 @@ def probCond(df, tag,display=False):
 #
 #* Note: adjust the value_variant-value_wt order to make sure all plots are roughly monotonically increasing *
 def ProdCondProbs(tagsSubset,df,df_train,display=False):
-    plt.figure()
+    if display: 
+      plt.figure()
     prods = np.ones(len(df.index))
     for tag in tagsSubset:
     #    plt.figure()
@@ -173,7 +175,12 @@ def ProdCondProbs(tagsSubset,df,df_train,display=False):
     #print(totProd)
     df['Prod'] = prods/maxProd
     # verify that np.sum(df['Prod']) = 1
-    plt.savefig('indi_condprob_md.pdf')
+    if display: 
+      plt.savefig('indi_condprob_md.pdf')
+
+      #plt.figure()
+      #plt.plot(df['Prod']) 
+      #plt.savefig("prod.png") 
 
 
 
@@ -196,6 +203,7 @@ def calcRates(df,cutoff=None,display=False,verbose=True):
         plt.figure()
         dummy = plotVals(df,tag='Prod')
         plt.plot(np.arange(n), cutoff*np.ones(n))
+        plt.gcf().savefig("prod.png") 
 
     insolSupThresh = np.where(insolVs >= cutoff)
     nInsolSupThresh = np.shape(insolSupThresh)[1]
@@ -207,25 +215,72 @@ def calcRates(df,cutoff=None,display=False,verbose=True):
     solSubThresh = np.where(solVs< cutoff)
     nsolSubThresh = np.shape(solSubThresh)[1]
 
-    #TPR = nInsolSupThresh/np.float( nInsolSupThresh + nsolSupThresh )
-    TPR = nInsolSupThresh/np.float( nInsolSupThresh + nsolSupThresh )
-    #FNR = 1 - nInsolSupThresh/np.float( len(insolVs) )
-    FNR = np.float( nInsolSubThresh + nsolSubThresh )
-    if FNR <= 1e-3:
-        FNR = 0.
-    else:
-        FNR = nInsolSubThresh/FNR
+    TP = nInsolSupThresh
+    FP = nsolSupThresh
+    TN = nsolSubThresh
+    FN = nInsolSubThresh 
 
-    #FPR = 1 - TPR
+    # TP/(TP + FP)
+    positives = np.float( TP + FP )
+    TPR = TP/positives                                      
+    # FP/(TP + FP)
+    FPR = FP/positives
+    negatives = np.float( FN + TN )
+    if negatives <= 1e-3:
+        FNR = 0.
+        TNR = 0.
+    else:
+        # FN/(FN + TN) 
+        FNR = FN/negatives 
+        # TN/(FN + TN) 
+        TNR = TN/negatives 
 
     if verbose:
         print("Cutoff ",cutoff)
-        print("TPR (insol)", TPR, " Support ", nInsolSupThresh)
-        print("FNR (insol)", FNR, " Support ", nInsolSubThresh)
-        #print("FPR (insol)", FPR, " Support ", nsolSupThresh)
+        print("TPR (insol)", TPR, " Support ", TP)
+        print("FPR (insol)", FPR, " Support ", FP)
+        print("TNR (insol)", TNR, " Support ", TN)
+        print("FNR (insol)", FNR, " Support ", FN)
 
-    return TPR,FNR
 
+    outputs = {
+            "TP":TP,
+            "FP":FP,
+            "TN":TN,
+            "FN":FN,
+            "TPR":TPR,
+            "FPR":FPR,
+            "TNR":TNR,
+            "FNR":FNR
+    } 
+    return outputs
+
+# calc F1 score, etc
+def calcStats(df_test,cutoff=0.3,display=False):
+  # stats for nontrafficking 
+  output = calcRates(df_test,cutoff=cutoff,display=display)
+  TP,FP,TN,FN = output['TP'],output['FP'],output['TN'],output['FN']
+
+  def calcall(TP,FP,TN,FN):
+    accuracy = (TP+TN)/np.float(TP+TN+FP+FN) 
+    precision = TP/(TP + FP)
+    recall = TP/(TP + FN) 
+    F1 = 2/(1/recall + 1/precision) 
+    return accuracy,precision,recall,F1 
+
+  accuracy,precision,recall,F1 = calcall(TP,FP,TN,FN)
+  print("Accuracy(NT)", accuracy) 
+  print("Precision(NT)", precision) 
+  print("Recall(NT)", recall)             
+  print("F1 score(NT)", F1) 
+
+  # get for trafficking now (a true negative for NT is a true pos. for T (a true negative for NT is a true pos. for T)) 
+  tTN, tFN, tTP, tFP = TP,FP,TN,FN
+  accuracy,precision,recall,F1 = calcall(tTP,tFP,tTN,tFN)
+  print("Accuracy(T)", accuracy) 
+  print("Precision(T)", precision) 
+  print("Recall(T)", recall)             
+  print("F1 score(T)", F1) 
 
 
 # compute ROC curve
@@ -236,19 +291,26 @@ def ComputeROC(df, threshVals = 20,display=False):
     cutoffs = np.linspace(minThresh,maxThresh, threshVals)
 
     tprs = []
+    fprs = []
+    tnrs = []
     fnrs = []
     for cutoff in cutoffs:
-        tpr,fnr = calcRates(df,cutoff=cutoff,display=False,verbose=False)
+        output = calcRates(df,cutoff=cutoff,display=False,verbose=False)
+        tpr,fpr,tnr,fnr = output['TPR'],output['FPR'],output['TNR'],output['FNR']
         tprs.append(tpr)
+        fprs.append(fpr)
+        tnrs.append(tnr)
         fnrs.append(fnr)
 
     # add 1,1 point
     tprs.append(1)
+    fprs.append(1)
     fnrs.append(1)
+    tnrs.append(1)
     tprs = np.asarray(tprs)
-    fprs = 1 - tprs
+    fprs = np.asarray(fprs)
     fnrs = np.asarray(fnrs)
-    tnrs = 1 - fnrs
+    tnrs = np.asarray(tnrs)
 
     from sklearn.metrics import auc
     rfnrs = fnrs# + 1e-2*np.arange( len(fnrs ))
@@ -258,26 +320,28 @@ def ComputeROC(df, threshVals = 20,display=False):
     daAUC = auc(rfnrs,rtprs)
 
      
-    plt.figure()
-    plt.scatter(fnrs,tprs, label="AUC=%4.2f"%daAUC)
-    plt.plot(fnrs,tprs)
-    xs = np.linspace(0,1,100)
-    plt.plot(xs,xs,'--', color="black", label="Random")
-    plt.title("ROC (Condition probability, Insoluble)")
-    plt.xlabel("FNR")
-    plt.ylabel("TPR")
-    plt.legend()
-    plt.savefig('roc_conditional_probability_md_features.pdf')
-
-
-    plt.figure()
-    cutoffs = np.concatenate([cutoffs,[1]])
-    plt.plot(cutoffs,tprs,'k-',label="tprs") 
-    plt.plot(cutoffs,fprs,'r-',label="fprs") 
-    plt.plot(cutoffs,tnrs,'k--',label="tnrs") 
-    plt.plot(cutoffs,fnrs,'r--',label="fnrs") 
-    plt.xlabel("Cutoffs") 
-    plt.legend()
+    if display: 
+      plt.figure()
+      plt.scatter(fnrs,tprs, label="AUC=%4.2f"%daAUC)
+      plt.plot(fnrs,tprs)
+      xs = np.linspace(0,1,100)
+      plt.plot(xs,xs,'--', color="black", label="Random")
+      plt.title("ROC (Condition probability, Insoluble)")
+      plt.xlabel("FNR")
+      plt.ylabel("TPR")
+      plt.legend()
+      plt.savefig('roc_conditional_probability_md_features.pdf')
+  
+  
+      plt.figure()
+      cutoffs = np.concatenate([cutoffs,[1]])
+      plt.plot(cutoffs,tprs,'k-',label="tprs") 
+      plt.plot(cutoffs,fprs,'r-',label="fprs") 
+      plt.plot(cutoffs,tnrs,'k--',label="tnrs") 
+      plt.plot(cutoffs,fnrs,'r--',label="fnrs") 
+      plt.xlabel("Cutoffs") 
+      plt.legend()
+      plt.gcf().savefig("rates.png") 
 
     outputs = dict()
     outputs['cutoffs']=cutoffs
@@ -300,9 +364,9 @@ def ProbClassifier(df,tags,display=False,split=True):
 
 
     # partition in test/training set
-    from sklearn.model_selection import train_test_split
     if split:
       df_train, df_test = train_test_split(df, test_size=0.3)
+      print ( len(df),len(df_train), len(df_test) )
     else: 
       df_train = df
       df_test = df
@@ -312,7 +376,8 @@ def ProbClassifier(df,tags,display=False,split=True):
 
     debug = True
     if debug:
-        dummy = calcRates(df_test,cutoff=None,display=display)
+        cutoff = 0.04     
+        dummy = calcStats(df_test,cutoff=cutoff,display=display)
 
     # compute ROC curve for classifier
     outputs = ComputeROC(df_test,display=display)
