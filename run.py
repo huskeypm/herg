@@ -32,15 +32,27 @@ def doit(analyses,bootstrap=False,display=True): # all, ml, prob
 
   # calc addl features
   feature.CalcInitialAA(df,newTag="INITAA")
-  # uncomment to add feature tags+=["INITAA"]
+  # uncomment to add feature 
+  tags+=["INITAA"]
+  rmsf={}
+  #rmsf={
+  #  'RMSF36TO41' : 'rmsf_sub2.txt',
+  #  'RMSF87TO92' : 'rmsf_sub3.txt',
+  #  'RMSF73TO78' : 'rmsf_sub4.txt',
+  #  'RMSF115TO120' : 'rmsf_sub.txt'} 
+  for key,val in rmsf.items(): 
+      print("feature_sets/%s"%val,key)
+      #feature.CalcRMSFLoc(df,"feature_sets/rmsf_sub2.txt", newTag="RMSF36TO41")
+      feature.CalcRMSFLoc(df,"feature_sets/%s"%val, newTag=key)                   
+      tags+=[key]
 
 
   #display=True  # prints out indi_condprob_md.pdf; roc_conditional_probability....
   print("Computing") 
   if analyses == "prob" or analyses == "all":
-    import probUtil as dU
+    import probUtil as pU
     split = True
-    outputs = dU.ProbClassifier(df,tags,display=display,split=split,bootstrap=bootstrap)  
+    outputs = pU.ProbClassifier(df,tags,display=display,split=split,bootstrap=bootstrap)  
     
   if analyses == "ml" or analyses == "all":
     import mlUtil

@@ -35,8 +35,15 @@ def ShapeData(df,tag,wtName,zscore=False,display=False):
     newTag = 'd'+tag
 
     # reorder such that more LOFs have higher values than wt
-    pctSup = nInSol_sup/np.float( nSuperThresh  )
-    pctSub = nInSol_sub/np.float( nSubThresh  )
+    try:
+        pctSup = nInSol_sup/np.float( nSuperThresh  )
+    except:
+        pctSup = 0.
+    try: 
+        pctSub = nInSol_sub/np.float( nSubThresh  )
+    except:
+        pctSub = 0.
+
 
     if (pctSup > pctSub):  # higher values have higher pctg of LOF variants
         df.loc[:,newTag] = df[tag] - vWT
@@ -177,7 +184,7 @@ def ProdCondProbs(tagsSubset,df,df_train,df_test,display=False):
     # verify that np.sum(df['Prod']) = 1
     
     # apply to test/train data 
-    df_train.loc[:,"Prod"] = 0
+    df_train.loc[:,'Prod'] = 0. # np.zeros_like( prods)
     df_test.loc[:,"Prod"] = 0
     #df_train = df_train.assign( Prod=0 )   
     #df_test  = df_test.assign( Prod=0 )   
@@ -409,10 +416,13 @@ def ComputeROC(df, threshVals = 20,display=False):
     return outputs 
 
 
-def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True):
+def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True,seed=None):
     if split:
-      df_train, df_test = train_test_split(df, test_size=0.3)
-      #print ( len(df),len(df_train), len(df_test) )
+      if seed is not None:
+        df_train, df_test = train_test_split(df, test_size=0.3,random_state=seed)
+      else: 
+        df_train, df_test = train_test_split(df, test_size=0.3)                       
+      #print ("Train/test", len(df),len(df_train), len(df_test) )
     else: 
       df_train = df
       df_test = df
@@ -420,11 +430,11 @@ def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True):
     # compute product of conditional probabilities
     ProdCondProbs(dTags,df,df_train,df_test,display=display)
 
-    cutoff = 0.04     # user encoded 
-    #print("TRAINING stats") 
-    outs_train= calcStats(df_train,cutoff=cutoff,display=display)
+    #cutoff = 0.04     # user encoded 
     #print("TESTING  stats") 
     outs_test= calcStats(df_test,cutoff=cutoff,display=display)
+    #print("TRAINING stats") 
+    outs_train= calcStats(df_train,cutoff=cutoff,display=display)
 
     return outs_train,outs_test, df_test
 
@@ -456,8 +466,10 @@ def ProbClassifier(df,tags,display=False,split=True,bootstrap=False):
           print(column+" avg: ",statsdf[column].mean())
 
     else:
+        seed = 192
+        cutoff = 0.015
         outs_train, outs_test,df_test = BuildAndEvaluate(
-                df,dTags,cutoff=0.04,split=split,display=display)
+                df,dTags,cutoff=cutoff,split=split,display=display,seed=seed)
 
 
     # compute ROC curve for classifier

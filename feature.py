@@ -27,12 +27,35 @@ def CalcInitialAA(df,newTag="INITAA"):
 
 
 ##### FOR KAL TO IMPLEMENT ###############
+import pandas as pd
 
 """
 Brief Documentation of feature 
 """
-def CalcRMSFScore(rmsfFileName, variantName, aaRange=[]):
-    return 1/0
+def CalcRMSFLoc(df,rmsfFileName,newTag="RMSF" ):#, aaRange=[]):
+    # convert into dictionary for easy lookup  
+    #print( df.loc[df['VARIANT'] == 'a57p'] ) 
+    df.loc[:,newTag] = 0      
+    with open(rmsfFileName) as f: 
+      for line in f:
+        # his format has a header with a single entry
+        vals = line.split()
+        if len(vals)<2:
+            continue 
+
+        mut,val = vals 
+        idx = df.index 
+        cond = df['VARIANT']==mut      #vals[0] ) 
+        varIdx = idx[cond].tolist()
+
+        if len(varIdx)<1:
+            print(mut, " not found in input list")
+            continue 
+
+        df.loc[varIdx,newTag] = float( val ) 
+        
+
+
 
 """
 Brief Documentation of feature 

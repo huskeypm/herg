@@ -5,7 +5,7 @@ A colab notebook is at https://colab.research.google.com/drive/1g9JlkIxmejK-xgfV
 
 feature_sets/ # contains feature data sets 
 
-dataUtil.py # for conditional probabilities 
+probUtil.py # for conditional probabilities 
 mlUtil.py # for ML strategies 
 
 # to generate results 
@@ -13,10 +13,13 @@ python run.py -run # generates plots for all data
 python run.py -nodisp -run prob # generates data from probability classifier, but without images (faster)  
 python run.py -bootstrap -nodisp -run prob # bootstrapping 
 
+# NOTE
+- Prob. classifier performance (F1 score etc) has a strong dependence on the cutoff used (defined in probUtil). Review the prod.png file to make sure a good value is selected 
+
 
 # TODOS
 - something is fishy about the zscores, so I want to look into that later
-- Splitting the dataset into 70% for training, 30% for testing leads to very noisy results for the test set. Most likely, in order to this properly, I will probably need to bootstrap. For now I'm using the entire data set for training and testing
+- DONE Splitting the dataset into 70% for training, 30% for testing leads to very noisy results for the test set. Most likely, in order to this properly, I will probably need to bootstrap. For now I'm using the entire data set for training and testing
 
 # MD trajectory analysis 
 - MD analysis is done with either cpptraj or tcl scripts that depends on the vmd and its associated packaged
