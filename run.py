@@ -17,7 +17,7 @@ import feature
 def doit(analyses,bootstrap=False,display=True): # all, ml, prob
   dataFile = "feature_sets/features-latest-sets1n2.txt"
   df = pd.read_csv(dataFile, sep="\s+", comment='#')
-  
+
   # get list of features
   if display: 
     print("Available features") 
@@ -32,8 +32,10 @@ def doit(analyses,bootstrap=False,display=True): # all, ml, prob
 
   # calc addl features
   feature.CalcInitialAA(df,newTag="INITAA")
-  # uncomment to add feature tags+=["INITAA"]
-
+  tags+=["INITAA"]
+  
+  feature.Calcsvolume(df,newTag="SVOLUME")
+  tags+=["SVOLUME"]  
 
   #display=True  # prints out indi_condprob_md.pdf; roc_conditional_probability....
   print("Computing") 
