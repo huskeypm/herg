@@ -20,7 +20,7 @@ def CalcInitialAA(df,newTag="INITAA"):
 
     daID = properties[variantName[0]]
     return daID 
-
+   
   df[newTag] = df.apply( lambda row:
          calc_prop(row['VARIANT']),
          axis=1)
@@ -77,13 +77,28 @@ def CalcSASASingleScore(nativeFileName, variantName):
 ####### volumes are missig for his, arg, cys
 ####### ref: "Volumes of Individual Amino Acid Residues in Gas-Phase Peptide Ions"
 def Calcsvolume(df,newTag="SVOLUME"):
-  properties={
+    properties={
       'a': 100.3, 'c':100, 'd': 113.1, 'e': 140.2, 
       'f': 202.3, 'g': 71.7, 'h':202, 'i': 175.4,
       'k': 170.3, 'l': 178.7, 'm':174.9, 'n':128.4,
       'p':137.2, 'q':156, 'r':170, 's':100.7, 't':127.6,
       'v':150.6, 'w':239, 'y':205.3,
-  }
+    }
+
+    def calc_prop(variantName):
+        #print(variantName,variantName[0],variantName[-1])
+        if variantName == 'wt':
+          return 0
+        
+        # compute volume difference between wt and mutated residues
+        volWT = properties[variantName[0]]
+        volMut = properties[variantName[-1]]
+        volDiff = abs(volWT-volMut) 
+        return volDiff 
+
+    df[newTag] = df.apply( lambda row:
+         calc_prop(row['VARIANT']),
+         axis=1)
 
 
 ####### aa charges

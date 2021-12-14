@@ -46,6 +46,9 @@ def doit(analyses,bootstrap=False,display=True): # all, ml, prob
       feature.CalcRMSFLoc(df,"feature_sets/%s"%val, newTag=key)                   
       tags+=[key]
 
+feature.Calcsvolume(df,newTag="SVOLUME")
+  tags+=["SVOLUME"]  
+
 
   #display=True  # prints out indi_condprob_md.pdf; roc_conditional_probability....
   print("Computing") 
