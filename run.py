@@ -31,8 +31,8 @@ def doit(analyses,bootstrap=False,display=True): # all, ml, prob
   #tags = ['RMSD','HBONDS']
 
   # calc addl features
-  feature.CalcInitialAA(df,newTag="INITAA")
-  tags+=["INITAA"]
+  #feature.CalcInitialAA(df,newTag="INITAA")
+  #tags+=["INITAA"]
   
   feature.Calcsvolume(df,newTag="SVOLUME")
   tags+=["SVOLUME"]  
