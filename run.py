@@ -14,7 +14,9 @@ import sys
 import pandas as pd
 import feature 
 
-def doit(analyses,bootstrap=False,display=True): # all, ml, prob
+def doit(analyses,# all, ml, prob
+         bootstrap=False,display=True,
+         features="all"): 
   dataFile = "feature_sets/features-latest-sets1n2.txt"
   df = pd.read_csv(dataFile, sep="\s+", comment='#')
   
@@ -26,14 +28,19 @@ def doit(analyses,bootstrap=False,display=True): # all, ml, prob
   
   # this is the subset  I selected
   #tags = ['RMSD','WATERS','SASA','HELIX','TURNS','COILS','BETA','THREE-TEN']
-  tags=["WATERS", "HBONDS", "RMSD", "SASA", "HELIX", "TURNS", "COILS", "THREE-TEN", "BETA"]
+  mdTags=["WATERS", "HBONDS", "RMSD", "SASA", "HELIX", "TURNS", "COILS", "THREE-TEN", "BETA"]
+  bioinfTags=["CONSERVATION","FOLDX", "HYDROPHOBICITY"]
   output = ["TRAFFICKING"]
-  #tags = ['RMSD','HBONDS']
 
   # calc addl features
+  suppTags=[]
   feature.CalcInitialAA(df,newTag="INITAA")
   # uncomment to add feature 
-  tags+=["INITAA"]
+  suppTags+=["INITAA"]
+   
+  feature.Calcsvolume(df,newTag="SVOLUME")
+  suppTags+=["SVOLUME"]  
+
   rmsf={}
   #rmsf={
   #  'RMSF36TO41' : 'rmsf_sub2.txt',
@@ -46,8 +53,18 @@ def doit(analyses,bootstrap=False,display=True): # all, ml, prob
       feature.CalcRMSFLoc(df,"feature_sets/%s"%val, newTag=key)                   
       tags+=[key]
 
-feature.Calcsvolume(df,newTag="SVOLUME")
-  tags+=["SVOLUME"]  
+  # identify tags
+  allTags = mdTags+bioinfTags
+  if features == "mdTags":
+      print("MD only") 
+      tags = mdTags
+  elif features =="bioinfTags":
+      print("bioinf only") 
+      tags = bioinfTags
+  else:
+      print("all features") 
+      tags = allTags 
+  
 
 
   #display=True  # prints out indi_condprob_md.pdf; roc_conditional_probability....
@@ -101,6 +118,7 @@ if __name__ == "__main__":
   # Loops over each argument in the command line 
   display = True
   bootstrap=False
+  features = "all" 
   for i,arg in enumerate(sys.argv):
     # calls 'doit' with the next argument following the argument '-validation'
     if(arg=="-run"):
@@ -109,12 +127,14 @@ if __name__ == "__main__":
       except:
         analyses="all" 
 
-      doit(analyses,bootstrap=bootstrap,display=display)     
+      doit(analyses,bootstrap=bootstrap,display=display,features=features)     
       quit()
     if(arg=="-nodisplay"):
       display = False
     if(arg=="-bootstrap"):
       bootstrap=True
+    if(arg=="-features"):
+      features=sys.argv[i+1] 
   
 
 

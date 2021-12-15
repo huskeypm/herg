@@ -416,7 +416,7 @@ def ComputeROC(df, threshVals = 20,display=False):
     return outputs 
 
 
-def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True,seed=None):
+def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True,seed=None,verbose=False):
     if split:
       if seed is not None:
         df_train, df_test = train_test_split(df, test_size=0.3,random_state=seed)
@@ -431,8 +431,9 @@ def BuildAndEvaluate(df,dTags,cutoff=0.04,display=False,split=True,seed=None):
     ProdCondProbs(dTags,df,df_train,df_test,display=display)
 
     #cutoff = 0.04     # user encoded 
-    #print("TESTING  stats") 
-    outs_test= calcStats(df_test,cutoff=cutoff,display=display)
+    if verbose:
+      print("TESTING  stats") 
+    outs_test= calcStats(df_test,cutoff=cutoff,display=display,verbose=verbose)
     #print("TRAINING stats") 
     outs_train= calcStats(df_train,cutoff=cutoff,display=display)
 
@@ -469,7 +470,7 @@ def ProbClassifier(df,tags,display=False,split=True,bootstrap=False):
         seed = 192
         cutoff = 0.015
         outs_train, outs_test,df_test = BuildAndEvaluate(
-                df,dTags,cutoff=cutoff,split=split,display=display,seed=seed)
+                df,dTags,cutoff=cutoff,split=split,display=display,seed=seed,verbose=True)
 
 
     # compute ROC curve for classifier
