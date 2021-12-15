@@ -90,10 +90,14 @@ def Calcsvolume(df,newTag="SVOLUME"):
         if variantName == 'wt':
           return 0
         
-        # compute volume difference between wt and mutated residues
-        volWT = properties[variantName[0]]
-        volMut = properties[variantName[-1]]
-        volDiff = abs(volWT-volMut) 
+        names=variantName.split('-') # for double mutants
+
+        volDiff=0
+        for name in names:       
+            # compute volume difference between wt and mutated residues
+            volWT = properties[variantName[0]]
+            volMut = properties[variantName[-1]]
+            volDiff += abs(volWT-volMut) 
         return volDiff 
 
     df[newTag] = df.apply( lambda row:
