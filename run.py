@@ -31,6 +31,7 @@ def doit(analyses,# all, ml, prob
   mdTags=["WATERS", "HBONDS", "RMSD", "SASA", "HELIX", "TURNS", "COILS", "THREE-TEN", "BETA"]
   bioinfTags=["CONSERVATION","FOLDX", "HYDROPHOBICITY"]
   output = ["TRAFFICKING"]
+  #tags = ['RMSD','HBONDS']
 
   # calc addl features
   suppTags=[]
@@ -53,6 +54,13 @@ def doit(analyses,# all, ml, prob
       feature.CalcRMSFLoc(df,"feature_sets/%s"%val, newTag=key)                   
       tags+=[key]
 
+  feature.CalcAPBS(df,"feature_sets/apbs.dat",newTag="APBS")
+  supptags+=["APBS"]
+    
+  feature.CalcSASASingleSite(df,"feature_sets/sasaSingleSite.dat",newTag="SASASingleSite")
+  supptags+=["SASASingleSite"]
+
+
   # identify tags
   allTags = mdTags+bioinfTags
   if features == "mdTags":
@@ -65,6 +73,8 @@ def doit(analyses,# all, ml, prob
       print("all features") 
       tags = allTags 
   
+
+
 
 
   #display=True  # prints out indi_condprob_md.pdf; roc_conditional_probability....

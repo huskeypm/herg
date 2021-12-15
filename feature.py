@@ -90,10 +90,14 @@ def Calcsvolume(df,newTag="SVOLUME"):
         if variantName == 'wt':
           return 0
         
-        # compute volume difference between wt and mutated residues
-        volWT = properties[variantName[0]]
-        volMut = properties[variantName[-1]]
-        volDiff = abs(volWT-volMut) 
+        names=variantName.split('-') # for double mutants
+
+        volDiff=0
+        for name in names:       
+            # compute volume difference between wt and mutated residues
+            volWT = properties[variantName[0]]
+            volMut = properties[variantName[-1]]
+            volDiff += abs(volWT-volMut) 
         return volDiff 
 
     df[newTag] = df.apply( lambda row:
@@ -110,3 +114,50 @@ def Calccharge(df,newTag="CHARGE"):
       'p':0, 'q':0, 'r':1, 's':0, 't':0,
       'v':0, 'w':0, 'y':0,
   }
+
+####### APBS solvation energy ######
+def CalcAPBS(df,apbsFileName,newTag="APBS" ):
+    # convert into dictionary for easy lookup  
+    #print( df.loc[df['VARIANT'] == 'a57p'] ) 
+    df.loc[:,newTag] = 0      
+    with open(apbsFileName) as f: 
+        for line in f:
+            # his format has a header with a single entry
+            vals = line.split()
+            if len(vals)<2:
+                continue 
+
+            mut,val = vals 
+            idx = df.index 
+            cond = df['VARIANT']==mut      #vals[0] ) 
+            varIdx = idx[cond].tolist()
+
+            if len(varIdx)<1:
+                print(mut, " not found in input list")
+                continue 
+
+            df.loc[varIdx,newTag] = float( val )
+            
+            
+####### SASA for the mutated residues ######
+def CalcSASASingleSite(df,sasaFileName,newTag="SASASingleSite" ):
+    # convert into dictionary for easy lookup  
+    #print( df.loc[df['VARIANT'] == 'a57p'] ) 
+    df.loc[:,newTag] = 0      
+    with open(sasaFileName) as f: 
+        for line in f:
+            # his format has a header with a single entry
+            vals = line.split()
+            if len(vals)<2:
+                continue 
+
+            mut,val = vals 
+            idx = df.index 
+            cond = df['VARIANT']==mut      #vals[0] ) 
+            varIdx = idx[cond].tolist()
+
+            if len(varIdx)<1:
+                print(mut, " not found in input list")
+                continue 
+
+            df.loc[varIdx,newTag] = float( val )
