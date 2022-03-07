@@ -25,12 +25,17 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 from sklearn import svm
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
 
 from sklearn import metrics
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, plot_confusion_matrix, plot_roc_curve
 
 from mlxtend.data import iris_data
 from sklearn.utils import resample
+
+import seaborn as sns
+from sklearn import datasets
 
 import os
 import math
@@ -86,19 +91,31 @@ def TestAccuracySingle(clf,X_test,Y_test,idx=0):
 
 #TestAccuracy(clf,X_test,Y_test,display=True)
 
-def DataCuration(df):
+def DataCuration(df,features):
     #df['decimal_place_2'] = df['decimal_place_2'].round(2)
-    df['HELIX'] = df['HELIX'].round(2)
-    df['TURNS'] = df['TURNS'].round(2)
-    df['COILS'] = df['COILS'].round(2)
-    df['THREE-TEN'] = df['THREE-TEN'].round(2)
-    df['BETA'] = df['BETA'].round(2)
-    df['HBONDS'] = df['HBONDS'].round()
-    df['WATERS'] = df['WATERS'].round()
-    df['RMSD'] = df['RMSD'].round(2)
-    df['SASA'] = df['SASA'].round()
-
-
+    # old data curation routine
+    if 0:
+        df['HELIX'] = df['HELIX'].round(2)
+        df['TURNS'] = df['TURNS'].round(2)
+        df['COILS'] = df['COILS'].round(2)
+        df['THREE-TEN'] = df['THREE-TEN'].round(2)
+        df['BETA'] = df['BETA'].round(2)
+        df['HBONDS'] = df['HBONDS'].round()
+        df['WATERS'] = df['WATERS'].round()
+        df['RMSD'] = df['RMSD'].round(2)
+        df['SASA'] = df['SASA'].round()
+        df['FOLDX'] = df['FOLDX'].round(2)
+        df['CONSERVATION'] = df['CONSERVATION'].round(2)
+        df['HYDROPHOBICITY'] = df['HYDROPHOBICITY'].round(2)
+    
+    
+    # new
+    skipList=['HBONDS','WATERS','SASA']
+    for feature in features:
+        if feature not in skipList:
+            df[feature]=df[feature].round(2)
+        else:
+            df[feature]=df[feature].round()
 
 """### Example with PAS data """
 
@@ -121,11 +138,18 @@ Classifiers: DT, RF, SVM
 """
 def MLClassifier(df,features,output, 
         classifier="DT",
-        display=False,random_state=50):
+        display=False,random_state=50,predict=False,dfPred=None):
+    
+    # number of features
+    nFeatures=len(features)
+    
+    # number of features to consider when looking for the best split
+    maxFeatures=4
+    
     # rounding for some reason 
-    DataCuration(df)
-
-
+    DataCuration(df,features)
+    
+    
     # get featrures/output 
     X = df[features]
     Y = df[output]
@@ -137,35 +161,74 @@ def MLClassifier(df,features,output,
     
     
     #initializing the classifier and fitting it
+    ### Decision Tree ###
     if classifier=="DT":
       print("Decision tree classifier") 
-      clf = DecisionTreeClassifier(
-        criterion = "entropy",
-        #class_weight="balanced",
-        random_state = random_state, #set random number seed
-          max_depth=None,
-          max_features=3,
-          min_samples_leaf=1) #min of samples needed at a node for it to split further
+    
+      # for single feaure
+      if nFeatures == 1:
+          clf = DecisionTreeClassifier(criterion = "entropy",random_state=50,max_depth=None, min_samples_leaf=1)
+      
+      elif nFeatures < maxFeatures and nFeatures > 1:
+          clf = DecisionTreeClassifier(
+            criterion = "entropy",
+            #class_weight="balanced",
+            random_state = random_state, #set random number seed
+              max_depth=None,
+              max_features=nFeatures,# was 3,
+              min_samples_leaf=1) #min of samples needed at a node for it to split further
+      
+      else:
+          clf = DecisionTreeClassifier(
+            criterion = "entropy",
+            #class_weight="balanced",
+            random_state = random_state, #set random number seed
+              max_depth=None,
+              max_features=maxFeatures,# was 3,
+              min_samples_leaf=1) #min of samples needed at a node for it to split further
       model=clf.fit(X_train, Y_train)
-
+    
+    ### Random Forest ###
     elif classifier=="RF": 
-      clf = RandomForestClassifier(
-              bootstrap=True, n_estimators=10000, criterion="entropy", max_depth=None, max_features=4, max_leaf_nodes=None,
-              min_samples_leaf=1, min_samples_split=2, random_state=50)
-      model=clf.fit(X_train, Y_train)
-
+      # for single feaure
+      if nFeatures == 1:
+          clf = RandomForestClassifier(bootstrap=True, n_estimators=10000, criterion="entropy", \
+                                       max_depth=None, max_leaf_nodes=None, \
+                                       min_samples_leaf=1, min_samples_split=2, random_state=50)
+            
+      elif nFeatures < maxFeatures and nFeatures > 1:
+          clf = RandomForestClassifier(bootstrap=True, n_estimators=10000, criterion="entropy", \
+                                       max_depth=None, max_features=nFeatures, max_leaf_nodes=None, \
+                                       min_samples_leaf=1, min_samples_split=2, random_state=random_state)
+            
+      else:
+          clf = RandomForestClassifier(bootstrap=True, n_estimators=10000, criterion="entropy", \
+                                       max_depth=None, max_features=maxFeatures, max_leaf_nodes=None, \
+                                       min_samples_leaf=1, min_samples_split=2, random_state=random_state)
+      model=clf.fit(X_train, Y_train.values.ravel()) #Y_train)
+      # k-fold crossvalidation
+      kfold = KFold(n_splits=10, random_state=None)
+      results = cross_val_score(model, X, Y.values.ravel(), cv=kfold)
+      print('k-fold crossvalidation results')
+      print(results, '\n')
+      print('results mean')
+      print(results.mean(), '\n')
+      
+    ### SVM ###
     elif classifier=="SVM":
-      print("VERY BUGGY/INSUFFICIENT IMPLEMENTATION") 
-      clf = svm.SVC()  
-      clf.fit(X_train, np.ravel( Y_train) )
-
+      #print("VERY BUGGY/INSUFFICIENT IMPLEMENTATION") 
+      #clf = svm.SVC()  
+      #clf.fit(X_train, np.ravel( Y_train) )
+      
+      # using linear kernel since it is easy to plot feature importance, for others hard to interpret
+      clf = SVC(gamma='auto', random_state=random_state, max_iter=10000, kernel='linear', probability=True) 
+      model=clf.fit(X_train, Y_train.values.ravel())    
+        
+        
     else:
       raise RuntimeError(classifier+" not supported") 
     
-    # fitting 
-    #model=clf.fit(X_train, Y_train)
 
-    
     # print training accuracy
     print("Training sample accuracy")
     TestAccuracy(clf,X_train,Y_train)
@@ -180,17 +243,31 @@ def MLClassifier(df,features,output,
     classNames=np.array(['non-trafficking', 'trafficking']) # need to verify, but I think this is correct
     print(classification_report(Y_test, y_predict, target_names=classNames))
     f1ScoreMacro =metrics.f1_score(Y_test, y_predict, average='macro')
-
-    if classifier=="SVM":
-        print("BOWING OUT UNTIL I CAN RESOLVE SOME BUGS WITH SVMS") 
-        return None 
+    
+    #if classifier=="SVM":
+    #    print("BOWING OUT UNTIL I CAN RESOLVE SOME BUGS WITH SVMS") 
+    #    return None 
 
     ### ROC 
     y_predict = clf.predict_proba(X_test.values)
     fpr, tpr, thr = metrics.roc_curve(Y_test, y_predict[:,1], drop_intermediate=False)
     auc = metrics.auc(fpr, tpr)
       
+    # predict on column E data
+    if predict:
+        DataCuration(dfPred)
+        X_pred=dfPred[features]
+        y_predict = clf.predict(X_pred)
+        dataframe=pd.DataFrame(y_predict)
+        dataframe.columns =['Prediction']
+        frames = [dfPred[['VARIANT']], dataframe]
+        result = pd.concat(frames, axis=1)
+        print(result)
+        
+        if display:
+            plot = sns.pairplot(dfPred[features]) 
     
+       
     if display:
         if classifier == "DT":    
           plotDT(clf,featureNames=features, classNames=classNames)
@@ -209,11 +286,18 @@ def MLClassifier(df,features,output,
         
         # print feature importance
         plt.figure()
-        feat_importances = pd.Series(model.feature_importances_, index=X.columns)
-        feat_importances.nlargest(10).plot(kind='barh', color="green")
+        if classifier == "SVM":
+            #this option to plot importance features only apply to linear kernel in SVM
+            feat_importances = pd.Series(abs(clf.coef_[0]), index=X.columns)
+        else:
+            feat_importances = pd.Series(model.feature_importances_, index=X.columns)
+        feat_importances.nlargest(15).plot(kind='barh', color="red").grid(False)
+        #feat_importances.nlargest(10).plot(kind='barh', color="green")
         plt.title('Feature Importances for '+classifier)  
-        plt.savefig(classifier+'_fi.pdf')
-
+        plt.tight_layout()
+        plt.savefig(classifier+'_fi.png')
+     
+    
     # package
     outputs = dict()
     #outputs['cutoffs']=cutoffs
@@ -225,6 +309,8 @@ def MLClassifier(df,features,output,
     outputs['f1score']=f1ScoreMacro
 
     return outputs 
+
+
 
 def OLD():
     """### generate data for ROC curve"""
