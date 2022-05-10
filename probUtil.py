@@ -207,7 +207,9 @@ def ProdCondProbs(tagsSubset,df,df_train,df_test,display=False):
 
 
     if display: 
-      plt.savefig('indi_condprob_md.pdf')
+      plt.legend(loc=0)
+      plt.tight_layout()
+      plt.savefig('indi_condprob_md.png')
 
       #plt.figure()
       #plt.plot(df['Prod']) 
@@ -389,11 +391,12 @@ def ComputeROC(df, threshVals = 20,display=False):
       plt.plot(fnrs,tprs)
       xs = np.linspace(0,1,100)
       plt.plot(xs,xs,'--', color="black", label="Random")
-      plt.title("ROC (Condition probability, Insoluble)")
+      plt.title("ROC (Condition probability, Insoluble, Bio. features)")
       plt.xlabel("FNR")
       plt.ylabel("TPR")
-      plt.legend()
-      plt.savefig('roc_conditional_probability_md_features.pdf')
+      plt.legend(loc=4)
+      plt.tight_layout()
+      plt.savefig('roc_conditional_probability_md_features.png')
   
   
       plt.figure()
@@ -412,7 +415,7 @@ def ComputeROC(df, threshVals = 20,display=False):
     outputs['fprs']=fprs
     outputs['tnrs']=tnrs
     outputs['fnrs']=fnrs
-    outputs['auc']=auc  
+    outputs['auc']=daAUC  
     return outputs 
 
 
@@ -454,14 +457,20 @@ def ProbClassifier(df,tags,display=False,split=True,bootstrap=False):
       nIter = 500
       print("Bootstrap with ",nIter)
       statsdf = pd.DataFrame()
+      aucs=[]
       for i in range(nIter):
-        print(i)
+        #print(i)
         outs_train, outs_test,df_test = BuildAndEvaluate(
                 df,dTags,cutoff=0.04,split=split,display=False)     
         dfn = pd.DataFrame(outs_test,index=[i])
         dfn['AccTraining'] = outs_train['acc']
+        dfn['AccTesting'] = outs_test['acc']
         statsdf = statsdf.append(dfn)
-
+        out=ComputeROC(df_test,display=False)
+        dat=out['auc']
+        aucs.append(dat)
+      avg=np.mean(aucs)
+      print('AUC: ', avg)
       print(statsdf.head())
       for column in statsdf.columns[:]:
           print(column+" avg: ",statsdf[column].mean())
