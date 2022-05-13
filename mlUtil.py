@@ -138,7 +138,7 @@ Classifiers: DT, RF, SVM
 """
 def MLClassifier(df,features,output, 
         classifier="DT",
-        display=False,random_state=50,predict=False,dfPred=None,featuresPred=None):
+        display=False,random_state=50,predict=False,dfPred=None):
     
     # number of features
     nFeatures=len(features)
@@ -256,7 +256,7 @@ def MLClassifier(df,features,output,
     # predict on column E data
     if predict:
         DataCuration(dfPred,features)
-        X_pred=dfPred[featuresPred]
+        X_pred=dfPred[features]
         y_predict = clf.predict(X_pred)
         dataframe=pd.DataFrame(y_predict)
         dataframe.columns =['Prediction']
