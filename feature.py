@@ -22,7 +22,7 @@ def CalcInitialAA(df,newTag="INITAA"):
     return daID 
    
   df[newTag] = df.apply( lambda row:
-         calc_prop(row['VARIANT']),
+         calc_prop(row['VARIANT'].lower()),
          axis=1)
 
 
@@ -101,7 +101,37 @@ def Calcsvolume(df,newTag="SVOLUME"):
         return volDiff 
 
     df[newTag] = df.apply( lambda row:
-         calc_prop(row['VARIANT']),
+         calc_prop(row['VARIANT'].lower()),
+         axis=1)
+    
+####### change in aa sidechain hydrophobicity is estimated.
+### Refs: EISE1982 EISE1984
+def Calchydrophobicity(df,newTag="HYDROPHOBICITY"):
+    properties={
+      'a': 0.25, 'c': 0.04, 'd': -0.72, 'e': -0.62, 
+      'f': 0.61, 'g': 0.16, 'h': -0.40, 'i': 0.73,
+      'k': -1.1, 'l': 0.53, 'm': 0.26, 'n': -0.64,
+      'p': -0.07, 'q': -0.69, 'r': -1.8, 's': -0.26, 't': -0.18,
+      'v': 0.54, 'w': 0.37, 'y': 0.02,
+    }
+
+    def calc_prop(variantName):
+        #print(variantName,variantName[0],variantName[-1])
+        if variantName == 'wt':
+          return 0
+        
+        names=variantName.split('-') # for double mutants
+
+        hpDiff=0
+        for name in names:       
+            # compute volume difference between wt and mutated residues
+            hpWT = properties[variantName[0]]
+            hpMut = properties[variantName[-1]]
+            hpDiff += hpMut-hpWT 
+        return hpDiff 
+
+    df[newTag] = df.apply( lambda row:
+         calc_prop(row['VARIANT'].lower()),
          axis=1)
 
 
