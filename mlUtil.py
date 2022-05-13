@@ -138,7 +138,7 @@ Classifiers: DT, RF, SVM
 """
 def MLClassifier(df,features,output, 
         classifier="DT",
-        display=False,random_state=50,predict=False,dfPred=None):
+        display=False,random_state=50,predict=False,dfPred=None,featuresPred=None):
     
     # number of features
     nFeatures=len(features)
@@ -194,7 +194,7 @@ def MLClassifier(df,features,output,
       if nFeatures == 1:
           clf = RandomForestClassifier(bootstrap=True, n_estimators=10000, criterion="entropy", \
                                        max_depth=None, max_leaf_nodes=None, \
-                                       min_samples_leaf=1, min_samples_split=2, random_state=50)
+                                       min_samples_leaf=1, min_samples_split=2, random_state=random_state)
             
       elif nFeatures < maxFeatures and nFeatures > 1:
           clf = RandomForestClassifier(bootstrap=True, n_estimators=10000, criterion="entropy", \
@@ -256,7 +256,7 @@ def MLClassifier(df,features,output,
     # predict on column E data
     if predict:
         DataCuration(dfPred,features)
-        X_pred=dfPred[features]
+        X_pred=dfPred[featuresPred]
         y_predict = clf.predict(X_pred)
         dataframe=pd.DataFrame(y_predict)
         dataframe.columns =['Prediction']
