@@ -2,9 +2,11 @@ import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from matplotlib import rcParams
 
 #pd.options.mode.chained_assignment = 'raise'
-
+rcParams['font.size']=20
+rcParams['font.family']='cursive'
 
 def CalcZScore(df,tag):
     vals = df.loc[df.index,[tag]]
@@ -50,11 +52,13 @@ def ShapeData(df,tag,wtName,zscore=False,display=False):
         label = newTag
     else:
         df.loc[:,newTag] = vWT - df[tag]    # lower values have higher pctg LOF variants
-        label = "-1 x "+newTag
+        label = newTag #"-1 x "+newTag
     #print(tag,pctSub,pctSup,tot,label)
 
     if display:
         plt.figure()
+        ax=plt.subplot()
+        ax.set_xticks([])
         dummy = plotVals(df,tag=newTag,asLog=False,label=label)
 
 
@@ -65,11 +69,15 @@ def ShapeData(df,tag,wtName,zscore=False,display=False):
       label+=" (z-score)"
 
       if display:
-          plt.figure()
-          dummy = plotVals(df,tag=newTag,asLog=False,label=label)
+          #plt.figure()
+          ax2=ax.twinx()
+          ax2.set_xticks([])
+          dummy = plotVals(df,tag=newTag,asLog=False,label='Z score',alpha=0) #label)
+    
+    plt.tight_layout()
+    plt.gcf().savefig('cond_{}.png'.format(tag))
 
-
-def plotVals(df,tag='dRMSD',asLog=False,label=None):
+def plotVals(df,tag='dRMSD',asLog=False,label=None,alpha=1):
     # sort
     dfs = df.sort_values(tag)
     l = dfs.reset_index()
@@ -94,13 +102,19 @@ def plotVals(df,tag='dRMSD',asLog=False,label=None):
     if asLog:
         insolVs = np.log(insolVs)
         solVs = np.log(solVs)
-    plt.bar(insolInds,insolVs,color='red',label='insoluble')
+     
+    plt.bar(insolInds,insolVs,color='coral',edgecolor='tab:red',label='insoluble',alpha=alpha)
     #plt.bar(solInds,solVs,color='blue',label='sol')
-    plt.bar(solInds,solVs,color='green',label='soluble')
+    plt.bar(solInds,solVs,color='darkseagreen',edgecolor='tab:green',label='soluble',alpha=alpha)
     if label is not None:
-        plt.ylabel(label)
+        if label == 'FOLDX':
+            plt.ylabel(r'{} ($\Delta\Delta$G)'.format(label))
+        elif label == 'Z score':
+            plt.ylabel(label)
+        else:
+            plt.ylabel(r'$\Delta${}'.format(label))
     plt.title(tag)
-    plt.legend()
+    #plt.legend()
 
     return insolVs, solVs
 
