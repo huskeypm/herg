@@ -309,7 +309,7 @@ def MLClassifier(df,features,output,
     #outputs['fnrs']=fnrs
     outputs['auc']=auc
     outputs['f1score']=f1ScoreMacro
-    outputs['f1_class']=f1s
+    outputs['f1_classes']=f1s
     
 
     return outputs 
