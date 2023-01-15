@@ -242,6 +242,8 @@ def MLClassifier(df,features,output,
     y_predict = clf.predict(X_test.values)
     classNames=np.array(['non-trafficking', 'trafficking']) # need to verify, but I think this is correct
     print(classification_report(Y_test, y_predict, target_names=classNames))
+    report=classification_report(Y_test, y_predict, target_names=classNames,output_dict=True)
+    f1s={'non-trafficking': report['non-trafficking']['f1-score'], 'trafficking': report['trafficking']['f1-score']}
     f1ScoreMacro =metrics.f1_score(Y_test, y_predict, average='macro')
     
     #if classifier=="SVM":
@@ -307,6 +309,8 @@ def MLClassifier(df,features,output,
     #outputs['fnrs']=fnrs
     outputs['auc']=auc
     outputs['f1score']=f1ScoreMacro
+    outputs['f1_class']=f1s
+    
 
     return outputs 
 
