@@ -487,8 +487,8 @@ def ProbClassifier(df,tags,display=False,split=True,bootstrap=False):
       print('AUC: ', avg)
       print(statsdf.head())
       for column in statsdf.columns[:]:
-          print(column+" avg: ",statsdf[column].mean())
-
+          print(column+" avg: ",statsdf[column].mean()) 
+        
     else:
         seed = 192
         cutoff = 0.015
@@ -498,6 +498,10 @@ def ProbClassifier(df,tags,display=False,split=True,bootstrap=False):
 
     # compute ROC curve for classifier
     outputs = ComputeROC(df_test,display=display)
+    
+    # output F1 scores for both classes
+    if bootstrap:
+        outputs['f1_classes']={'non-trafficking': statsdf['f1'].mean(), 'trafficking': statsdf['f1T'].mean()}
 
     return outputs
 
