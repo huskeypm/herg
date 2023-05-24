@@ -18,11 +18,6 @@ python run.py -bootstrap -nodisp -run prob # bootstrapping
 # NOTE
 - Prob. classifier performance (F1 score etc) has a strong dependence on the cutoff used (defined in probUtil). Review the prod.png file to make sure a good value is selected 
 
-
-# TODOS
-- something is fishy about the zscores, so I want to look into that later
-- DONE Splitting the dataset into 70% for training, 30% for testing leads to very noisy results for the test set. Most likely, in order to this properly, I will probably need to bootstrap. For now I'm using the entire data set for training and testing
-
 # MD trajectory analysis 
 - MD analysis is done with either cpptraj or tcl scripts that depends on the vmd and its associated packaged
 - all MD analysis for this project are done on the local gpu cluster (faust), in view of the amount of data
